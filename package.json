@@ -1,0 +1,22 @@
+{
+  "name": "clpp_interstitial_demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "demo": "npm i && npx http-server -c-1 -o /"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fingerartur/clpp_interstitial_demo.git"
+  },
+  "author": "Artur Finger",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fingerartur/clpp_interstitial_demo/issues"
+  },
+  "homepage": "https://github.com/fingerartur/clpp_interstitial_demo#readme",
+  "dependencies": {
+    "@castlabs/prestoplay": "^6.16.0"
+  }
+}

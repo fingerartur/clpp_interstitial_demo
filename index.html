@@ -1,0 +1,264 @@
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/mux.js@5.14.1/dist/mux.js"></script>
+    <script src="node_modules/@castlabs/prestoplay/cjs/cl.core.js"></script>
+    <script src="node_modules/@castlabs/prestoplay/cjs/cl.mse.js"></script>
+    <script src="node_modules/@castlabs/prestoplay/cjs/cl.hls.js"></script>
+    <script src="node_modules/@castlabs/prestoplay/cjs/cl.dash.js"></script>
+    <link rel="stylesheet" href="node_modules/@castlabs/prestoplay/clpp.styles.css">
+    <style>
+      .page-container {
+        margin: 10px;
+      }
+      h2 {
+        text-align: center;
+      }
+      .line {
+        margin: 10px;
+      }
+      .row {
+        display: flex;
+        flex-direction: row;
+      }
+      .video-el {
+        position: relative;
+        width: 300px;
+        height: 230px;
+        margin: 10px;
+        background-color: rgb(255 253 253);
+        border: 8px solid #f5efef;
+      }
+      .video-el-index {
+        padding: 2px 10px;
+        position: absolute;
+        left: 220px;
+        top: 10px;
+        background: black;
+        color: white;
+        z-index: 4;
+      }
+      video {
+        width: 100%;
+        height: 100%;
+      }
+      section {
+        margin: 10px;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(172, 162, 162, 0.5);
+      }
+      .anchor-container {
+        position: relative;
+        width: 500px;
+        height: 210px;
+      }
+      .error {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 1;
+      }
+      .error div {
+        color: red;
+        width: 280px;
+        height: 190px;
+        border: 1px solid black;
+      }
+      #video-anchor {
+        width: 300px;
+        height: 230px;
+      }
+      .loading {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+      }
+      button.destroy {
+        margin-left: 50px;
+        background: rgb(254, 229, 233);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="interstitial-player-demo">
+        <div class="page-container">
+          <section class="playlist-preview">
+            <h2>HLS Interstitial Player</h2>
+            <div>
+              <button id="btn-load" class="button">Load</button>
+              <button id="btn-unload" class="button">Unload</button>
+              <button id="btn-destroy" class="button">Destroy</button>
+              <button id="btn-pause" class="button">(Un)pause</button>
+            </div>
+            <div class="anchor-container">
+              <div class="row" id="video-anchor"></div>
+            </div>
+            <div id="text-position">Position: 0 s</div>
+            <ul id="cues"></ul>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script>
+    clpp.install(clpp.hls.HlsComponent);
+    clpp.install(clpp.dash.DashComponent);
+    clpp.install(clpp.drm.HeaderDrmComponent);
+
+    const positionEl = document.getElementById('text-position');
+    const btnLoad = document.getElementById('btn-load');
+    const cuesEl = document.getElementById('cues');
+    const btnUnload = document.getElementById('btn-unload');
+    const btnDestroy = document.getElementById('btn-destroy');
+    const btnPause = document.getElementById('btn-pause');
+
+    const state = {
+      position: null,
+      duration: null,
+      canLoad: true,
+      canUnload: false,
+      canDestroy: true,
+    };
+
+    function repaint() {
+      positionEl.innerText = `Position: ${state.position ?? 0} / ${state.duration ?? 0} s`;
+      btnLoad.disabled = !state.canLoad;
+      btnUnload.disabled = !state.canUnload;
+      btnDestroy.disabled = !state.canDestroy;
+    }
+
+    const anchorEl = document.getElementById('video-anchor');
+    const player = new clpp.interstitial.Player({
+      config: {
+        // license: 'castlabs license'
+      },
+      anchorEl,
+    });
+    window.player = player;
+
+    let disposers = [];
+    player.on('item-changed', (event) => {
+      console.info('EVT: item-changed', event.detail);
+
+      disposers.forEach(d => d());
+      disposers = [];
+
+      const p = player.getCurrentPlayer();
+      const media = p.getSurface().getMedia();
+      media.controls = true;
+
+      const onTimeUpdate = () => {
+        console.info('timeupdate', p.getPosition());
+      };
+      const onStateChange = () => {
+        console.info('statechange', p.getState());
+      };
+      const onBufferingStarted = () => {
+        console.info('buffering-started');
+      };
+      const onBufferingEnded = () => {
+        console.info('buffering-ended');
+      };
+      p.addEventListener('timeupdate', onTimeUpdate);
+      p.addEventListener(clpp.events.STATE_CHANGED, onStateChange);
+      p.addEventListener(clpp.events.BUFFERING_STARTED, onBufferingStarted);
+      p.addEventListener(clpp.events.BUFFERING_ENDED, onBufferingEnded);
+      disposers.push(() => {
+        p.removeEventListener('timeupdate', onTimeUpdate);
+        p.removeEventListener(clpp.events.STATE_CHANGED, onStateChange);
+        p.removeEventListener(clpp.events.BUFFERING_STARTED, onBufferingStarted);
+        p.removeEventListener(clpp.events.BUFFERING_ENDED, onBufferingEnded);
+      });
+    });
+
+    player.on('interstitial-started', (event) => {
+      console.info('EVT: interstitial-started', event.detail);
+    });
+    player.on('interstitial-ended', (event) => {
+      console.info('EVT: interstitial-ended', event.detail);
+    });
+    player.on('interstitial-item-started', (event) => {
+      console.info('EVT: interstitial-item-started', event.detail);
+    });
+    player.on('primary-player-changed', (event) => {
+      window.player = event.detail.player;
+      console.info('EVT: primary-player-changed', event.detail);
+    });
+    player.on('primary-started', (event) => {
+      console.info('EVT: primary-started', event.detail);
+    });
+    player.on('playback-started', (event) => {
+      console.info('EVT: playback-started', event.detail);
+    });
+    player.on('primary-ended', (event) => {
+      console.info('EVT: primary-ended', event.detail);
+    });
+    player.on('interstitial-preload-started', (event) => {
+      console.info('EVT: interstitial-preload-started', event.detail);
+    });
+    player.on('x-asset-list-request-started', (event) => {
+      console.info('EVT: x-asset-list-request-started', event.detail);
+    });
+    player.on('x-asset-list-request-ended', (event) => {
+      console.info('EVT: x-asset-list-request-ended', event.detail);
+    });
+    player.on('interstitial-scheduled', (event) => {
+      console.info('EVT: interstitial-scheduled', event.detail);
+    });
+
+    setInterval(() => {
+      state.position = (player.getPosition() ?? 0).toFixed(1);
+      state.duration = player.getCurrentPlayer()?.getDuration().toFixed(1) ?? 0;
+      repaint();
+    }, 400);
+
+    btnPause.addEventListener('click', () => {
+      const p = player.getCurrentPlayer();
+      if (!p) return;
+      if (p.isPaused()) {
+        p.play();
+      } else {
+        p.pause();
+      }
+    });
+
+    btnLoad.addEventListener('click', async () => {
+      state.canLoad = false;
+      await player.load({
+        source: 'https://content.players.castlabs.com/api-interstitials-v3/vod-fixed.m3u8'
+      });
+
+      const cues = player.getCues();
+      cues.forEach(cue => {
+        const li = document.createElement('li');
+        li.innerText = `Cue "${cue.cueId}" at ${cue.startTime} s`;
+        cuesEl.appendChild(li);
+      });
+      state.canUnload = true;
+      state.canDestroy = true;
+      repaint();
+    });
+
+    btnUnload.addEventListener('click', async () => {
+      await player.unload();
+      Array.from(cuesEl.childNodes).forEach(el => cuesEl.removeChild(el));
+      state.canLoad = true;
+      state.canUnload = false;
+      repaint();
+    });
+
+    btnDestroy.addEventListener('click', () => {
+      player.destroy();
+      Array.from(cuesEl.childNodes).forEach(el => cuesEl.removeChild(el));
+      state.canUnload = false;
+      state.canDestroy = false;
+      repaint();
+    });
+
+    repaint();
+    </script>
+  </body>
+</html>
