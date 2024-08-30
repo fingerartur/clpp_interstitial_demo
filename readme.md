@@ -14,3 +14,13 @@ the demo app:
 ```sh
 npm run demo
 ```
+
+## API docs
+
+The [typings.d.ts](./typings.d.ts) file contains TS typings for the PRESTOplay
+SDK. In this file look for `namespace interstitial` on line 6442, this namespace
+contains the whole API of the interstitial player.
+
+The main class is `clpp.interstitial.Player`.
+
+
