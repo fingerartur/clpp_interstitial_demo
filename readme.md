@@ -1,10 +1,10 @@
-# PRESTOplay interstitial player guide
+# PRESTOplay Interstitial Player Guide
 
-The PRESTOplay interstitial player API is an experimental API aimed at
+The PRESTOplay interstitial player API is part of the [@castlabs/prestoplay SDK](https://www.npmjs.com/package/@castlabs/prestoplay) and it is an experimental API aimed at
 playback of HLS content containing interstitials. This guide is here to
 help you experiment with the API until it gets finalized.
 
-## Demo app
+## Demo App
 
 [index.html](./index.html) contains a demo app demonstrating the use of this API.
 Start the demo app:
@@ -13,7 +13,7 @@ Start the demo app:
 npm run demo
 ```
 
-## API docs
+## API Docs
 
 The [typings.d.ts](./typings.d.ts) file contains TS typings for the PRESTOplay
 SDK. In this file look for [namespace interstitial] which contains the whole
@@ -29,7 +29,7 @@ The main class is [clpp.interstitial.Player].
 - Certain parts of the spec of HLS interstitials are not supported,
   see comments of [clpp.interstitial.Player].
 
-## Usage
+## Usage Manual
 
 The interstitial player is based on multi-controller architecture where two
 video elements and two instances of [clpp.Player] are used to perform
