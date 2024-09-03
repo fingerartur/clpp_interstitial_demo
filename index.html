@@ -79,6 +79,19 @@
         margin-left: 50px;
         background: rgb(254, 229, 233);
       }
+
+      #input-url {
+        width: 500px;
+        margin-bottom: 20px;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      #error {
+        color: red;
+      }
     </style>
   </head>
   <body>
@@ -87,6 +100,9 @@
         <div class="page-container">
           <section class="playlist-preview">
             <h2>HLS Interstitial Player</h2>
+            <div>
+              <input type="text" id="input-url" value="https://content.players.castlabs.com/api-interstitials-v3/vod-fixed.m3u8" />
+            </div>
             <div>
               <button id="btn-load" class="button">Load</button>
               <button id="btn-unload" class="button">Unload</button>
@@ -98,6 +114,7 @@
             </div>
             <div id="text-position">Position: 0 s</div>
             <ul id="cues"></ul>
+            <div id="error"></div>
           </section>
         </div>
       </div>
@@ -114,6 +131,8 @@
     const btnUnload = document.getElementById('btn-unload');
     const btnDestroy = document.getElementById('btn-destroy');
     const btnPause = document.getElementById('btn-pause');
+    const inputUrl = document.getElementById('input-url');
+    const errorEl = document.getElementById('error');
 
     const state = {
       position: null,
@@ -121,6 +140,7 @@
       canLoad: true,
       canUnload: false,
       canDestroy: true,
+      error: null,
     };
 
     function repaint() {
@@ -128,6 +148,7 @@
       btnLoad.disabled = !state.canLoad;
       btnUnload.disabled = !state.canUnload;
       btnDestroy.disabled = !state.canDestroy;
+      errorEl.innerText = state.error ? `Error: ${state.error}` : '';
     }
 
     const anchorEl = document.getElementById('video-anchor');
@@ -226,20 +247,28 @@
     });
 
     btnLoad.addEventListener('click', async () => {
-      state.canLoad = false;
-      await player.load({
-        source: 'https://content.players.castlabs.com/api-interstitials-v3/vod-fixed.m3u8'
-      });
+      try {
+        state.canLoad = false;
+        state.error = null;
+        await player.load({
+          source: inputUrl.value,
+        });
 
-      const cues = player.getCues();
-      cues.forEach(cue => {
-        const li = document.createElement('li');
-        li.innerText = `Cue "${cue.cueId}" at ${cue.startTime} s`;
-        cuesEl.appendChild(li);
-      });
-      state.canUnload = true;
-      state.canDestroy = true;
-      repaint();
+        const cues = player.getCues();
+        cues.forEach(cue => {
+          const li = document.createElement('li');
+          li.innerText = `Cue "${cue.cueId}" at ${cue.startTime} s`;
+          cuesEl.appendChild(li);
+        });
+        state.canUnload = true;
+        state.canDestroy = true;
+      } catch (error) {
+        console.error('Error loading', error);
+        state.error = error.message;
+        state.canLoad = true;
+      } finally {
+        repaint();
+      }
     });
 
     btnUnload.addEventListener('click', async () => {
