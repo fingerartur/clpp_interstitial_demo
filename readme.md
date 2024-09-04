@@ -167,6 +167,39 @@ player.on('item-changed', (event) => {
 });
 ```
 
+## Plugins
+
+### Yospace
+
+Import Yospace Ad Management SDK version 3.6.11.
+
+```html
+<script src="admanagement-sdk-3.6.11.min.js"></script>
+```
+
+Enable the Yospace plugin.
+
+```js
+const player = new clpp.interstitial.Player({
+  config: {
+    license: '...', // castlabs license key
+    viewerId: 'user-1',
+  },
+  anchorEl,
+  yospace: { enabled: true },
+});
+```
+
+Pass a Yospace CSM URI to the player which will automatically start a Yospace
+playback session and play the underlying asset.
+
+```js
+await player.load({
+  source: 'https://...' // Yospace CSM URI
+});
+```
+
+
 [namespace interstitial]: ./typings.d.ts#L6442
 [clpp.interstitial.Player]: ./typings.d.ts#L6657
 [clpp.interstitial.Event]: ./typings.d.ts#L6566

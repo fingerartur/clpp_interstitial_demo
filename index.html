@@ -1,6 +1,7 @@
 <html>
   <head>
     <script src="https://cdn.jsdelivr.net/npm/mux.js@5.14.1/dist/mux.js"></script>
+    <script src="admanagement-sdk-3.6.11.min.js"></script>
     <script src="node_modules/@castlabs/prestoplay/cjs/cl.core.js"></script>
     <script src="node_modules/@castlabs/prestoplay/cjs/cl.mse.js"></script>
     <script src="node_modules/@castlabs/prestoplay/cjs/cl.hls.js"></script>
@@ -171,9 +172,9 @@
       <div class="interstitial-player-demo">
         <div class="page-container">
           <section>
-            <h2>HLS Interstitial Player</h2>
+            <h2>HLS Interstitial Player w Yospace</h2>
             <div>
-              <input type="text" id="input-url" value="https://content.players.castlabs.com/api-interstitials-v3/vod-fixed.m3u8" />
+              URL: <input type="text" id="input-url" value="" />
             </div>
             <div>
               <button id="btn-load" class="button">Load</button>
@@ -198,6 +199,10 @@
     </main>
 
     <script>
+    if (typeof YospaceAdManagement !== 'object') {
+      alert('Please supply YospaceAdManagement SDK 3.6.11');
+    }
+
     clpp.install(clpp.hls.HlsComponent);
     clpp.install(clpp.dash.DashComponent);
     clpp.install(clpp.drm.HeaderDrmComponent);
@@ -266,6 +271,7 @@
         viewerId: 'user-1',
       },
       anchorEl,
+      yospace: { enabled: true },
     });
     window.player = player;
 
