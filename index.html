@@ -134,13 +134,43 @@
       #seek-bar.interstitial .cue {
         display: none;
       }
+
+      #countdown {
+        position: absolute;
+        left: 240px;
+        top: 40px;
+        z-index: 2;
+        background: black;
+        color: white;
+        padding: 4px;
+        font-family: monospace;
+        min-width: 40px;
+      }
+      #countdown.hidden {
+        display: none;
+      }
+
+      #podOrder {
+        position: absolute;
+        left: 10px;
+        top: 40px;
+        z-index: 2;
+        background: black;
+        color: white;
+        padding: 4px;
+        font-family: monospace;
+        min-width: 40px;
+      }
+      #podOrder.hidden {
+        display: none;
+      }
     </style>
   </head>
   <body>
     <main>
       <div class="interstitial-player-demo">
         <div class="page-container">
-          <section class="playlist-preview">
+          <section>
             <h2>HLS Interstitial Player</h2>
             <div>
               <input type="text" id="input-url" value="https://content.players.castlabs.com/api-interstitials-v3/vod-fixed.m3u8" />
@@ -152,12 +182,14 @@
               <button id="btn-pause" class="button">(Un)pause</button>
             </div>
             <div class="anchor-container">
+              <div id="countdown" class="hidden" title="Interstitial countdown"></div>
+              <div id="podOrder" class="hidden" title="Interstitial pod order"></div>
               <div class="row" id="video-anchor"></div>
             </div>
-            <div id="seek-bar">
+            <div id="seek-bar" title="Seek bar">
               <div id="worm"></div>
             </div>
-            <div id="text-position">Position: 0 s</div>
+            <div id="text-position" title="Position">Position: 0 s</div>
             <ul id="cues"></ul>
             <div id="error"></div>
           </section>
@@ -180,6 +212,8 @@
     const errorEl = document.getElementById('error');
     const seekBar = document.getElementById('seek-bar');
     const wormEl = document.getElementById('worm');
+    const countdownEl = document.getElementById('countdown');
+    const podOrderEl = document.getElementById('podOrder');
 
     const SEEK_BAR_WIDTH = 300;
 
@@ -190,6 +224,7 @@
       canUnload: false,
       canDestroy: true,
       error: null,
+      interstitial: null,
     };
 
     function update() {
@@ -208,6 +243,19 @@
       // Seek bar
       const percent = Math.round((state.position / state.duration) * 100) ;
       wormEl.style.width = `${percent}%`;
+
+      if (state.interstitial) {
+        countdownEl.classList.remove('hidden');
+        const remainingSec = Math.ceil(state.duration - state.position);
+        countdownEl.innerText = `${remainingSec} s`;
+        if (state.interstitial.podCount > 1) {
+          podOrderEl.classList.remove('hidden');
+          podOrderEl.innerText = `${state.interstitial.podOrder}/${state.interstitial.podCount}`;
+        }
+      } else {
+        countdownEl.classList.add('hidden');
+        podOrderEl.classList.add('hidden');
+      }
     }
 
     const anchorEl = document.getElementById('video-anchor');
@@ -263,10 +311,12 @@
     player.on('interstitial-ended', (event) => {
       console.info('EVT: interstitial-ended', event.detail);
       seekBar.classList.remove('interstitial');
+      state.interstitial = null;
       update();
     });
     player.on('interstitial-item-started', (event) => {
       console.info('EVT: interstitial-item-started', event.detail);
+      state.interstitial = event.detail;
       update();
     });
     player.on('primary-player-changed', (event) => {
