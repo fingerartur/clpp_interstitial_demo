@@ -92,6 +92,48 @@
       #error {
         color: red;
       }
+
+      #seek-bar {
+        position: relative;
+        width: 300px;
+        height: 8px;
+        background-color: #dedede;
+        border: 1px solid black;
+        margin-top: 30px;
+        margin-bottom: 20px;
+        cursor: pointer;
+      }
+
+      #seek-bar .cue {
+        width: 4;
+        height: 100%;
+        background-color: rgb(0 172 255 / 99%);
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+      }
+
+      #seek-bar #worm {
+        height: 100%;
+        background-color: rgb(255, 255, 255);
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 0;
+      }
+
+      #seek-bar.interstitial {
+        background-color: #9d9a3c;
+      }
+
+      #seek-bar.interstitial #worm {
+        background-color: rgb(249, 255, 160);
+      }
+
+      #seek-bar.interstitial .cue {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -111,6 +153,9 @@
             </div>
             <div class="anchor-container">
               <div class="row" id="video-anchor"></div>
+            </div>
+            <div id="seek-bar">
+              <div id="worm"></div>
             </div>
             <div id="text-position">Position: 0 s</div>
             <ul id="cues"></ul>
@@ -133,6 +178,10 @@
     const btnPause = document.getElementById('btn-pause');
     const inputUrl = document.getElementById('input-url');
     const errorEl = document.getElementById('error');
+    const seekBar = document.getElementById('seek-bar');
+    const wormEl = document.getElementById('worm');
+
+    const SEEK_BAR_WIDTH = 300;
 
     const state = {
       position: null,
@@ -143,12 +192,22 @@
       error: null,
     };
 
+    function update() {
+      state.position = (player.getPosition() ?? 0).toFixed(1);
+      state.duration = player.getCurrentPlayer()?.getDuration().toFixed(1) ?? 0;
+      repaint();
+    }
+
     function repaint() {
       positionEl.innerText = `Position: ${state.position ?? 0} / ${state.duration ?? 0} s`;
       btnLoad.disabled = !state.canLoad;
       btnUnload.disabled = !state.canUnload;
+      seekBar.disabled = !state.canUnload;
       btnDestroy.disabled = !state.canDestroy;
       errorEl.innerText = state.error ? `Error: ${state.error}` : '';
+      // Seek bar
+      const percent = Math.round((state.position / state.duration) * 100) ;
+      wormEl.style.width = `${percent}%`;
     }
 
     const anchorEl = document.getElementById('video-anchor');
@@ -173,7 +232,7 @@
       media.controls = true;
 
       const onTimeUpdate = () => {
-        console.info('timeupdate', p.getPosition());
+        update();
       };
       const onStateChange = () => {
         console.info('statechange', p.getState());
@@ -198,12 +257,17 @@
 
     player.on('interstitial-started', (event) => {
       console.info('EVT: interstitial-started', event.detail);
+      seekBar.classList.add('interstitial');
+      update();
     });
     player.on('interstitial-ended', (event) => {
       console.info('EVT: interstitial-ended', event.detail);
+      seekBar.classList.remove('interstitial');
+      update();
     });
     player.on('interstitial-item-started', (event) => {
       console.info('EVT: interstitial-item-started', event.detail);
+      update();
     });
     player.on('primary-player-changed', (event) => {
       window.player = event.detail.player;
@@ -231,12 +295,6 @@
       console.info('EVT: interstitial-scheduled', event.detail);
     });
 
-    setInterval(() => {
-      state.position = (player.getPosition() ?? 0).toFixed(1);
-      state.duration = player.getCurrentPlayer()?.getDuration().toFixed(1) ?? 0;
-      repaint();
-    }, 400);
-
     btnPause.addEventListener('click', () => {
       const p = player.getCurrentPlayer();
       if (!p) return;
@@ -247,6 +305,37 @@
       }
     });
 
+    seekBar.addEventListener('click', (event) => {
+      // Seek
+      if (seekBar.disabled) return;
+      const rect = seekBar.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const duration = player.getCurrentPlayer().getDuration();
+      const position = (x / rect.width) * duration;
+      player.getCurrentPlayer().seek(position);
+    });
+
+    function renderCues(player) {
+      const cues = player.getCues();
+      const duration = player.getCurrentPlayer().getDuration();
+
+      // Render cues on the seek bar
+      cues.forEach(cue => {
+        const div = document.createElement('div');
+        div.classList.add('cue');
+        const left = Math.round((cue.startTime / duration) * SEEK_BAR_WIDTH);
+        div.style.left = `${left}px`;
+        div.title = `Cue "${cue.cueId}" at ${cue.startTime} s`;
+        seekBar.appendChild(div);
+      });
+      // Render cues as a list
+      cues.forEach(cue => {
+        const li = document.createElement('li');
+        li.innerText = `Cue "${cue.cueId}" at ${cue.startTime} s`;
+        cuesEl.appendChild(li);
+      });
+    }
+
     btnLoad.addEventListener('click', async () => {
       try {
         state.canLoad = false;
@@ -255,12 +344,7 @@
           source: inputUrl.value,
         });
 
-        const cues = player.getCues();
-        cues.forEach(cue => {
-          const li = document.createElement('li');
-          li.innerText = `Cue "${cue.cueId}" at ${cue.startTime} s`;
-          cuesEl.appendChild(li);
-        });
+        renderCues(player);
         state.canUnload = true;
         state.canDestroy = true;
       } catch (error) {
@@ -272,9 +356,18 @@
       }
     });
 
+    function clearUi () {
+      // Remove cues from the seek bar
+      Array.from(seekBar.childNodes)
+        .filter(el => el.classList && el.classList.contains('cue'))
+        .forEach(el => seekBar.removeChild(el));
+      // Remove cues from the list
+      Array.from(cuesEl.childNodes).forEach(el => cuesEl.removeChild(el));
+    }
+
     btnUnload.addEventListener('click', async () => {
       await player.unload();
-      Array.from(cuesEl.childNodes).forEach(el => cuesEl.removeChild(el));
+      clearUi();
       state.canLoad = true;
       state.canUnload = false;
       repaint();
@@ -282,7 +375,7 @@
 
     btnDestroy.addEventListener('click', () => {
       player.destroy();
-      Array.from(cuesEl.childNodes).forEach(el => cuesEl.removeChild(el));
+      clearUi();
       state.canUnload = false;
       state.canDestroy = false;
       repaint();
