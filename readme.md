@@ -47,6 +47,7 @@ const anchorEl = document.getElementById('anchor');
 const player = new clpp.interstitial.Player({
   config: {
     license: '...', // castlabs license key
+    viewerId: 'user-1',
   },
   anchorEl,
 });
