@@ -216,6 +216,7 @@
     const podOrderEl = document.getElementById('podOrder');
 
     const SEEK_BAR_WIDTH = 300;
+    const REPLAY_TIMEOUT = 3000;
 
     const state = {
       position: null,
@@ -303,6 +304,31 @@
       });
     });
 
+    async function load() {
+      if (!inputUrl.value) {
+        alert('Please supply a URL');
+        return;
+      }
+
+      try {
+        state.canLoad = false;
+        state.error = null;
+        await player.load({
+          source: inputUrl.value,
+        });
+
+        renderCues(player);
+        state.canUnload = true;
+        state.canDestroy = true;
+      } catch (error) {
+        console.error('Error loading', error);
+        state.error = error.message;
+        state.canLoad = true;
+      } finally {
+        repaint();
+      }
+    }
+
     player.on('interstitial-started', (event) => {
       console.info('EVT: interstitial-started', event.detail);
       seekBar.classList.add('interstitial');
@@ -329,8 +355,15 @@
     player.on('playback-started', (event) => {
       console.info('EVT: playback-started', event.detail);
     });
-    player.on('primary-ended', (event) => {
+    player.on('primary-ended', async (event) => {
       console.info('EVT: primary-ended', event.detail);
+
+      clearUi();
+      await player.unload();
+      // Replay after 3 seconds
+      setTimeout(() => {
+        load();
+      }, REPLAY_TIMEOUT);
     });
     player.on('interstitial-preload-started', (event) => {
       console.info('EVT: interstitial-preload-started', event.detail);
@@ -386,25 +419,7 @@
       });
     }
 
-    btnLoad.addEventListener('click', async () => {
-      try {
-        state.canLoad = false;
-        state.error = null;
-        await player.load({
-          source: inputUrl.value,
-        });
-
-        renderCues(player);
-        state.canUnload = true;
-        state.canDestroy = true;
-      } catch (error) {
-        console.error('Error loading', error);
-        state.error = error.message;
-        state.canLoad = true;
-      } finally {
-        repaint();
-      }
-    });
+    btnLoad.addEventListener('click', load);
 
     function clearUi () {
       // Remove cues from the seek bar
