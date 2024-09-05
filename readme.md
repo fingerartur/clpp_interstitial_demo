@@ -199,6 +199,12 @@ await player.load({
 });
 ```
 
+After the asset is loaded get the corresponding Yospace session.
+
+```js
+const session = player.getYospaceSession();
+```
+
 
 [namespace interstitial]: ./typings.d.ts#L6442
 [clpp.interstitial.Player]: ./typings.d.ts#L6657

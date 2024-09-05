@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/fingerartur/clpp_interstitial_demo#readme",
   "dependencies": {
-    "@castlabs/prestoplay": "^6.16.1-beta.1"
+    "@castlabs/prestoplay": "^6.16.1-beta.2"
   }
 }

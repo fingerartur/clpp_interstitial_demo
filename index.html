@@ -323,6 +323,9 @@
           source: inputUrl.value,
         });
 
+        const session = player.getYospaceSession();
+        console.log('Yospace session', session);
+
         renderCues(player);
         state.canUnload = true;
         state.canDestroy = true;
