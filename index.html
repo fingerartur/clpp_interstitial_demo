@@ -1,45 +1,17 @@
 <html>
   <head>
     <script src="https://cdn.jsdelivr.net/npm/mux.js@5.14.1/dist/mux.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
     <script src="node_modules/@castlabs/prestoplay/cjs/cl.core.js"></script>
     <script src="node_modules/@castlabs/prestoplay/cjs/cl.mse.js"></script>
     <script src="node_modules/@castlabs/prestoplay/cjs/cl.hls.js"></script>
     <script src="node_modules/@castlabs/prestoplay/cjs/cl.dash.js"></script>
     <link rel="stylesheet" href="node_modules/@castlabs/prestoplay/clpp.styles.css">
     <style>
-      .page-container {
-        margin: 10px;
-      }
-      h2 {
-        text-align: center;
-      }
       .line {
         margin: 10px;
-      }
-      .row {
-        display: flex;
-        flex-direction: row;
-      }
-      .video-el {
-        position: relative;
-        width: 300px;
-        height: 230px;
-        margin: 10px;
-        background-color: rgb(255 253 253);
-        border: 8px solid #f5efef;
-      }
-      .video-el-index {
-        padding: 2px 10px;
-        position: absolute;
-        left: 220px;
-        top: 10px;
-        background: black;
-        color: white;
-        z-index: 4;
-      }
-      video {
-        width: 100%;
-        height: 100%;
       }
       section {
         margin: 10px;
@@ -47,11 +19,7 @@
         border-radius: 10px;
         box-shadow: 0 0 10px rgba(172, 162, 162, 0.5);
       }
-      .anchor-container {
-        position: relative;
-        width: 500px;
-        height: 210px;
-      }
+
       .error {
         position: absolute;
         top: 20px;
@@ -64,29 +32,39 @@
         height: 190px;
         border: 1px solid black;
       }
-      #video-anchor {
-        width: 300px;
-        height: 230px;
+
+      .player-ui {
+        width: 60%;
+        aspect-ratio: 16/9;
+        height: 10%;
       }
+      @media only screen and (max-width: 1000px) {
+        .player-ui {
+          width: 60%;
+        }
+      }
+      .video-container {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16/9;
+        border: 1px solid rgb(150, 150, 150);
+        background: #232323;
+      }
+      #video {
+        width: 100%;
+        height: 100%;
+      }
+      video {
+        width: 100%;
+        height: 100%;
+      }
+
       .loading {
         position: absolute;
         width: 100%;
         height: 100%;
         top: 0;
         left: 0;
-      }
-      button.destroy {
-        margin-left: 50px;
-        background: rgb(254, 229, 233);
-      }
-
-      #input-url {
-        width: 500px;
-        margin-bottom: 20px;
-      }
-
-      button {
-        cursor: pointer;
       }
 
       #error {
@@ -95,15 +73,12 @@
 
       #seek-bar {
         position: relative;
-        width: 300px;
+        width: 100%;
         height: 8px;
         background-color: #dedede;
         border: 1px solid black;
-        margin-top: 30px;
-        margin-bottom: 20px;
         cursor: pointer;
       }
-
       #seek-bar .cue {
         width: 4;
         height: 100%;
@@ -113,7 +88,6 @@
         left: 0;
         z-index: 1;
       }
-
       #seek-bar #worm {
         height: 100%;
         background-color: rgb(255, 255, 255);
@@ -122,22 +96,19 @@
         left: 0;
         z-index: 0;
       }
-
       #seek-bar.interstitial {
         background-color: #9d9a3c;
       }
-
       #seek-bar.interstitial #worm {
         background-color: rgb(249, 255, 160);
       }
-
       #seek-bar.interstitial .cue {
         display: none;
       }
 
       #countdown {
         position: absolute;
-        left: 240px;
+        right: 20px;
         top: 40px;
         z-index: 2;
         background: black;
@@ -146,13 +117,13 @@
         font-family: monospace;
         min-width: 40px;
       }
-      #countdown.hidden {
+      .hidden {
         display: none;
       }
 
       #podOrder {
         position: absolute;
-        left: 10px;
+        left: 20px;
         top: 40px;
         z-index: 2;
         background: black;
@@ -161,39 +132,67 @@
         font-family: monospace;
         min-width: 40px;
       }
-      #podOrder.hidden {
-        display: none;
+
+      .badge-danger {
+        background-color: red;
+      }
+
+      #badge-live {
+        position: absolute;
+        top: -10px;
+        z-index: 2;
+        left: -10px;
       }
     </style>
   </head>
   <body>
-    <main>
+    <main class="container-lg">
       <div class="interstitial-player-demo">
-        <div class="page-container">
-          <section>
-            <h2>HLS Interstitial Player</h2>
-            <div>
-              <input type="text" id="input-url" value="https://content.players.castlabs.com/api-interstitials-v3/vod-fixed.m3u8" />
+        <section>
+          <h2 class="mb-4">HLS Interstitial Player</h2>
+
+          <div class="url">
+            <select id="url-select" class="form-select form-select-sm mb-1"></select>
+            <div class="input-group mb-3">
+              <span class="input-group-text">URL</span>
+              <input id="input-url" type="text" class="form-control" value="" />
             </div>
-            <div>
-              <button id="btn-load" class="button">Load</button>
-              <button id="btn-unload" class="button">Unload</button>
-              <button id="btn-destroy" class="button">Destroy</button>
-              <button id="btn-pause" class="button">(Un)pause</button>
+          </div>
+
+          <div class="buttons">
+            <button id="btn-load" class="btn btn-success">Load</button>
+            <button id="btn-pause" class="btn btn-primary">(Un)pause</button>
+            <button id="btn-unload" class="btn btn-primary">Release</button>
+            <button id="btn-destroy" class="btn btn-danger">Destroy</button>
+          </div>
+
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="flag-autoplay" checked>
+            <label class="form-check-label" for="flag-autoplay">Autoplay</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="flag-enable" checked>
+            <label class="form-check-label" for="flag-enable">Interstitials enabled</label>
+          </div>
+
+          <div class="player-area mt-5 mb-5 d-flex justify-content-center">
+            <div class="player-ui">
+              <div class="video-container">
+                <span id="badge-live" class="hidden badge badge-pill badge-danger">LIVE</span>
+                <div id="countdown" class="hidden" title="Interstitial countdown"></div>
+                <div id="podOrder" class="hidden" title="Interstitial pod order"></div>
+                <video id="video"></video>
+              </div>
+              <div id="seek-bar" title="Seek bar" class="mt-2">
+                <div id="worm"></div>
+              </div>
             </div>
-            <div class="anchor-container">
-              <div id="countdown" class="hidden" title="Interstitial countdown"></div>
-              <div id="podOrder" class="hidden" title="Interstitial pod order"></div>
-              <div class="row" id="video-anchor"></div>
-            </div>
-            <div id="seek-bar" title="Seek bar">
-              <div id="worm"></div>
-            </div>
-            <div id="text-position" title="Position">Position: 0 s</div>
-            <ul id="cues"></ul>
-            <div id="error"></div>
-          </section>
-        </div>
+          </div>
+
+          <div id="text-position" title="Position">Position: 0 s</div>
+          <ul id="cues"></ul>
+          <div id="error"></div>
+        </section>
       </div>
     </main>
 
@@ -214,9 +213,97 @@
     const wormEl = document.getElementById('worm');
     const countdownEl = document.getElementById('countdown');
     const podOrderEl = document.getElementById('podOrder');
+    const urlSelectEl = document.getElementById('url-select');
+    const flagAutoplayEl = document.getElementById('flag-autoplay');
+    const flagEnableEl = document.getElementById('flag-enable');
+    const badgeLiveEl = document.getElementById('badge-live');
 
-    const SEEK_BAR_WIDTH = 300;
-    const REPLAY_TIMEOUT = 3000;
+    const MOCK_CUES = {
+      STARTOVER_MIDROLL: (() => {
+        let cues = null;
+        return (player) => {
+          if (cues) return cues;
+          const position = player.getSeekRange().start;
+          cues = [
+            {
+              id: 'cue-1',
+              startTime: position + 120,
+              endTime: position + 145,
+              value: '',
+              schemeIdUri: 'com.apple.hls.interstitial',
+              eventElement: null,
+              type: clpp.TimelineCueType.HLS_DATERANGE,
+              customAttributes: {
+                'X-ASSET-LIST': `https://content.players.castlabs.com/api-interstitials-v3/B-P1-B_360p.json`,
+              },
+            },
+            {
+              id: 'cue-2',
+              startTime: position + 400,
+              endTime: position + 425,
+              value: '',
+              schemeIdUri: 'com.apple.hls.interstitial',
+              eventElement: null,
+              type: clpp.TimelineCueType.HLS_DATERANGE,
+              customAttributes: {
+                'X-ASSET-LIST': `https://content.players.castlabs.com/api-interstitials-v3/B-P1-B_360p.json`,
+              },
+            },
+          ];
+          return cues;
+        };
+      })(),
+      VOD_MIDROLL: () => {
+        return [
+          {
+            id: 'cue-1',
+            startTime: 60,
+            endTime: 90,
+            value: '',
+            schemeIdUri: 'com.apple.hls.interstitial',
+            eventElement: null,
+            type: clpp.TimelineCueType.HLS_DATERANGE,
+            customAttributes: {
+              'X-ASSET-LIST': `https://content.players.castlabs.com/api-interstitials-v3/B-P1-B_360p.json`,
+              'X-RESUME-OFFSET': 30,
+              // 'X-RESUME-OFFSET': -10,
+              // 'X-RESUME-OFFSET': 0,
+              // 'X-RESUME-OFFSET': undefined,
+            },
+          },
+        ];
+      },
+      PREROLL: () => {
+        return [
+          {
+            id: 'cue-1',
+            startTime: 0,
+            endTime: 0,
+            value: '',
+            schemeIdUri: 'com.apple.hls.interstitial',
+            eventElement: null,
+            type: clpp.TimelineCueType.HLS_DATERANGE,
+            customAttributes: {
+              'X-ASSET-LIST': `https://content.players.castlabs.com/api-interstitials-v3/B-P1-B_360p.json`,
+              'CUE': 'PRE',
+            },
+          },
+        ];
+      },
+      POSTROLL: () => [{
+        id: 'cue-1',
+        startTime: 0,
+        endTime: 0,
+        value: '',
+        schemeIdUri: 'com.apple.hls.interstitial',
+        eventElement: null,
+        type: clpp.TimelineCueType.HLS_DATERANGE,
+        customAttributes: {
+          'X-ASSET-LIST': `https://content.players.castlabs.com/api-interstitials-v3/B-P1-B_360p.json`,
+          'CUE': 'POST',
+        },
+      }],
+    }
 
     const state = {
       position: null,
@@ -226,83 +313,115 @@
       canDestroy: true,
       error: null,
       interstitial: null,
+      live: false,
     };
 
     function update() {
       state.position = (player.getPosition() ?? 0).toFixed(1);
-      state.duration = player.getCurrentPlayer()?.getDuration().toFixed(1) ?? 0;
+      if (player.isLive()) {
+        state.duration = player.getSeekRange().end.toFixed(1) ?? 0;
+      } else {
+        state.duration = player.getDuration().toFixed(1) ?? 0;
+      }
       repaint();
     }
 
     function repaint() {
-      positionEl.innerText = `Position: ${state.position ?? 0} / ${state.duration ?? 0} s`;
+      let position = state.position;
+      let duration = state.duration;
+      if (state.interstitial) {
+        position = state.interstitial.position;
+        duration = state.interstitial.duration;
+      }
+
+      positionEl.innerText = `Position: ${position ?? 0} / ${duration ?? 0} s`;
+      if (state.live && !state.interstitial) {
+        const delta = (duration - position).toFixed(1);
+        positionEl.innerText += ` (-${delta} s)`;
+      }
       btnLoad.disabled = !state.canLoad;
       btnUnload.disabled = !state.canUnload;
       seekBar.disabled = !state.canUnload;
       btnDestroy.disabled = !state.canDestroy;
       errorEl.innerText = state.error ? `Error: ${state.error}` : '';
       // Seek bar
-      const percent = Math.round((state.position / state.duration) * 100) ;
+      const percent = Math.round((position / duration) * 100) ;
       wormEl.style.width = `${percent}%`;
 
       if (state.interstitial) {
+        seekBar.classList.add('interstitial');
         countdownEl.classList.remove('hidden');
-        const remainingSec = Math.ceil(state.duration - state.position);
+        const remainingSec = Math.ceil(duration - position);
         countdownEl.innerText = `${remainingSec} s`;
         if (state.interstitial.podCount > 1) {
           podOrderEl.classList.remove('hidden');
           podOrderEl.innerText = `${state.interstitial.podOrder}/${state.interstitial.podCount}`;
         }
       } else {
+        seekBar.classList.remove('interstitial');
         countdownEl.classList.add('hidden');
         podOrderEl.classList.add('hidden');
       }
     }
 
-    const anchorEl = document.getElementById('video-anchor');
-    const player = new clpp.interstitial.Player({
-      config: {
-        // license: 'castlabs license',
-        viewerId: 'user-1',
+    const urlOptions = [
+      {
+        title: 'AIP midroll VOD',
+        url: 'https://content.players.castlabs.com/api-interstitials-v3/vod-fixed.m3u8',
+        // This asset has ads every 30 seconds so we have to lower resolutionOffsetSec
+        // from 35 to e.g. 10 so the preloading/binding does not overlap
+        resolutionOffsetSec: 10,
+        default: true,
       },
-      anchorEl,
+      {
+        title: 'AIP preroll VOD (CUE=PRE)',
+        url: 'https://content.players.castlabs.com/api-interstitials-v3/vod-preroll.m3u8',
+        // Contains CUE=PRE
+      },
+      {
+        title: 'Shaka preroll VOD',
+        url: 'https://storage.googleapis.com/shaka-demo-assets/hls-interstitials/interstitial.m3u8',
+      },
+      {
+        title: 'Custom',
+        url: '',
+        custom: true,
+      },
+    ];
+
+    let selected = null;
+
+    function select (option) {
+      if (!option) return;
+      selected = option;
+      urlSelectEl.value = option.title;
+      inputUrl.value = option.url;
+      inputUrl.disabled = !Boolean(option.custom);
+    }
+
+    urlSelectEl.innerHTML = urlOptions.map((option, index) => {
+      return `<option value="${option.title}">${option.title}</option>`;
+    }).join('');
+    urlSelectEl.addEventListener('change', () => {
+      const value = urlSelectEl.value;
+      const option = urlOptions.find(o => o.title === value);
+      select(option);
+    });
+
+    select(urlOptions.find(o => o.default));
+
+    const player = new clpp.Player('video', {
+      // license: 'castlabs license',
+      viewerId: 'user-1',
     });
     window.player = player;
 
     let disposers = [];
-    player.on('item-changed', (event) => {
-      console.info('EVT: item-changed', event.detail);
 
+    function dispose() {
       disposers.forEach(d => d());
       disposers = [];
-
-      const p = player.getCurrentPlayer();
-      const media = p.getSurface().getMedia();
-      media.controls = true;
-
-      const onTimeUpdate = () => {
-        update();
-      };
-      const onStateChange = () => {
-        console.info('statechange', p.getState());
-      };
-      const onBufferingStarted = () => {
-        console.info('buffering-started');
-      };
-      const onBufferingEnded = () => {
-        console.info('buffering-ended');
-      };
-      p.addEventListener('timeupdate', onTimeUpdate);
-      p.addEventListener(clpp.events.STATE_CHANGED, onStateChange);
-      p.addEventListener(clpp.events.BUFFERING_STARTED, onBufferingStarted);
-      p.addEventListener(clpp.events.BUFFERING_ENDED, onBufferingEnded);
-      disposers.push(() => {
-        p.removeEventListener('timeupdate', onTimeUpdate);
-        p.removeEventListener(clpp.events.STATE_CHANGED, onStateChange);
-        p.removeEventListener(clpp.events.BUFFERING_STARTED, onBufferingStarted);
-        p.removeEventListener(clpp.events.BUFFERING_ENDED, onBufferingEnded);
-      });
-    });
+    }
 
     async function load() {
       if (!inputUrl.value) {
@@ -313,11 +432,62 @@
       try {
         state.canLoad = false;
         state.error = null;
-        await player.load({
-          source: inputUrl.value,
+
+        // Set up listeners
+        const onTimeUpdate = () => {
+          update();
+        };
+        const onStateChange = () => {
+          // console.info('statechange', player.getState());
+        };
+        const onBufferingStarted = () => {
+          // console.info('buffering-started');
+        };
+        const onBufferingEnded = () => {
+          // console.info('buffering-ended');
+        };
+        const onCuesChanged = () => {
+          renderCues(player);
+        };
+        player.on('timeupdate', onTimeUpdate);
+        player.on(clpp.events.STATE_CHANGED, onStateChange);
+        player.on(clpp.events.BUFFERING_STARTED, onBufferingStarted);
+        player.on(clpp.events.BUFFERING_ENDED, onBufferingEnded);
+        player.on(clpp.events.TIMELINE_CUES_CHANGED, onCuesChanged);
+        disposers.push(() => {
+          player.off('timeupdate', onTimeUpdate);
+          player.off(clpp.events.STATE_CHANGED, onStateChange);
+          player.off(clpp.events.BUFFERING_STARTED, onBufferingStarted);
+          player.off(clpp.events.BUFFERING_ENDED, onBufferingEnded);
+          player.off(clpp.events.TIMELINE_CUES_CHANGED, onCuesChanged);
         });
 
-        renderCues(player);
+        await player.load({
+          source: {
+            url: inputUrl.value,
+            type: clpp.Type.HLS,
+          },
+          autoplay: flagAutoplayEl.checked ?? false,
+          ads: {
+            hls: {
+              enable: flagEnableEl.checked ?? false,
+              resolutionOffsetSec: selected.resolutionOffsetSec ?? 35,
+              mockCuesFn: selected.mockCues,
+            },
+          },
+        });
+
+        if (selected.afterLoad) {
+          await selected.afterLoad(player);
+        }
+
+        if (player.isLive()) {
+          state.live = true;
+          badgeLiveEl.classList.remove('hidden');
+        } else {
+          badgeLiveEl.classList.add('hidden');
+        }
+
         state.canUnload = true;
         state.canDestroy = true;
       } catch (error) {
@@ -329,62 +499,96 @@
       }
     }
 
-    player.on('interstitial-started', (event) => {
-      console.info('EVT: interstitial-started', event.detail);
-      seekBar.classList.add('interstitial');
+    player.on(clpp.events.AD_IMPRESSION, (event) => {
+      console.info('EVT: AD_IMPRESSION Ad impression', event.detail);
+    });
+    player.on(clpp.events.AD_PAUSED, (event) => {
+      console.info('EVT: AD_PAUSED Ad paused', event.detail);
+      state.interstitial.paused = true;
+    });
+    player.on(clpp.events.AD_RESUMED, (event) => {
+      console.info('EVT: AD_RESUMED Ad resumed', event.detail);
+      state.interstitial.paused = false;
+    });
+    player.on(clpp.events.AD_FIRST_QUARTILE, (event) => {
+      console.info('EVT: AD_FIRST_QUARTILE Ad first quartile', event.detail);
+    });
+    player.on(clpp.events.AD_MIDPOINT, (event) => {
+      console.info('EVT: AD_MIDPOINT Ad midpoint', event.detail);
+    });
+    player.on(clpp.events.AD_THIRD_QUARTILE, (event) => {
+      console.info('EVT: AD_THIRD_QUARTILE Ad third quartile', event.detail);
+    });
+
+    player.on(clpp.events.AD_PROGRESS, (event) => {
+      state.interstitial.position = event.detail.getPosition().toFixed(1);
+      // console.info('EVT: Ad progress', event.detail);
+      state.interstitial.paused = false;
       update();
     });
-    player.on('interstitial-ended', (event) => {
-      console.info('EVT: interstitial-ended', event.detail);
-      seekBar.classList.remove('interstitial');
+
+    player.on(clpp.events.AD_BREAK_STARTED, (event) => {
+      console.info('EVT: AD_BREAK_STARTED Ad break started', event.detail);
+      update();
+    });
+
+    player.on(clpp.events.AD_STARTED, (event) => {
+      console.info('EVT: AD_STARTED Ad started', event.detail);
+      state.interstitial = {
+        podOrder: event.detail.getPositionInSequence(),
+        podCount: event.detail.getSequenceLength(),
+        position: 0,
+        duration: event.detail.getDuration(),
+        paused: true,
+      };
+      update();
+    });
+
+    player.on(clpp.events.AD_STOPPED, (event) => {
+      console.info('EVT: AD_STOPPED Ad stopped', event.detail);
+    });
+
+    player.on(clpp.events.AD_COMPLETED, (event) => {
+      console.info('EVT: AD_COMPLETED Ad completed', event.detail);
+    });
+
+    player.on(clpp.events.AD_BREAK_STOPPED, () => {
+      console.info('EVT: AD_BREAK_STOPPED Ad break ended');
       state.interstitial = null;
       update();
     });
-    player.on('interstitial-item-started', (event) => {
-      console.info('EVT: interstitial-item-started', event.detail);
-      state.interstitial = event.detail;
-      update();
-    });
-    player.on('primary-player-changed', (event) => {
-      window.player = event.detail.player;
-      console.info('EVT: primary-player-changed', event.detail);
-    });
-    player.on('primary-started', (event) => {
-      console.info('EVT: primary-started', event.detail);
-    });
-    player.on('playback-started', (event) => {
-      console.info('EVT: playback-started', event.detail);
-    });
-    player.on('primary-ended', async (event) => {
-      console.info('EVT: primary-ended', event.detail);
 
-      clearUi();
-      await player.unload();
-      // Replay after 3 seconds
-      setTimeout(() => {
-        load();
-      }, REPLAY_TIMEOUT);
+    player.on('playing', async (event) => {
+      console.info('EVT: playing', );
     });
-    player.on('interstitial-preload-started', (event) => {
-      console.info('EVT: interstitial-preload-started', event.detail);
+    player.on('ended', async (event) => {
+      console.info('EVT: ended', event);
     });
-    player.on('x-asset-list-request-started', (event) => {
-      console.info('EVT: x-asset-list-request-started', event.detail);
+
+    player.on(clpp.events.AD_HLS_ASSET_LIST_REQUEST, () => {
+      console.info('EVT: AD_HLS_ASSET_LIST_REQUEST Asset list request');
     });
-    player.on('x-asset-list-request-ended', (event) => {
-      console.info('EVT: x-asset-list-request-ended', event.detail);
+    player.on(clpp.events.AD_HLS_ASSET_LIST_RESPONSE, () => {
+      console.info('EVT: AD_HLS_ASSET_LIST_RESPONSE Asset list response');
     });
-    player.on('interstitial-scheduled', (event) => {
-      console.info('EVT: interstitial-scheduled', event.detail);
+    player.on(clpp.events.AD_LOADED, () => {
+      console.info('EVT: AD_LOADED Interstitial loaded and scheduled');
     });
 
     btnPause.addEventListener('click', () => {
-      const p = player.getCurrentPlayer();
-      if (!p) return;
-      if (p.isPaused()) {
-        p.play();
+      if (state.interstitial) {
+        const adsManager = player.getAdsManager();
+        if (state.interstitial.paused === true) {
+          adsManager.resume();
+        } else if (state.interstitial.paused === false) {
+          adsManager.pause();
+        }
       } else {
-        p.pause();
+        if (player.isPaused()) {
+          player.play();
+        } else {
+          player.pause();
+        }
       }
     });
 
@@ -393,45 +597,95 @@
       if (seekBar.disabled) return;
       const rect = seekBar.getBoundingClientRect();
       const x = event.clientX - rect.left;
-      const duration = player.getCurrentPlayer().getDuration();
+      const duration = player.getDuration();
       const position = (x / rect.width) * duration;
-      player.getCurrentPlayer().seek(position);
+      player.seek(position);
     });
 
+    function getSeekBarWidth() {
+      return seekBar.getBoundingClientRect().width;
+    }
+
+    function placement (cue) {
+      const placements = cue.customAttributes?.CUE ?? [];
+      if (placements.includes('PRE')) {
+        return 'PREROLL';
+      }
+      if (placements.includes('POST')) {
+        return 'POSTROLL';
+      }
+      return 'MIDROLL';
+    }
+
     function renderCues(player) {
-      const cues = player.getCues();
-      const duration = player.getCurrentPlayer().getDuration();
+      clearCues();
+      const cues = player.getTimelineCues();
+      const duration = player.getDuration();
 
       // Render cues on the seek bar
-      cues.forEach(cue => {
-        const div = document.createElement('div');
-        div.classList.add('cue');
-        const left = Math.round((cue.startTime / duration) * SEEK_BAR_WIDTH);
-        div.style.left = `${left}px`;
-        div.title = `Cue "${cue.cueId}" at ${cue.startTime} s`;
-        seekBar.appendChild(div);
-      });
+      if (!state.live) {
+        cues.filter(cue => placement(cue) === 'MIDROLL')
+          .forEach(cue => {
+            const div = document.createElement('div');
+            div.classList.add('cue');
+            const left = Math.round((cue.startTime / duration) * getSeekBarWidth());
+            div.style.left = `${left}px`;
+            div.title = `Cue "${cue.id}" at ${cue.startTime.toFixed(1)} s`;
+            seekBar.appendChild(div);
+          });
+      }
       // Render cues as a list
-      cues.forEach(cue => {
-        const li = document.createElement('li');
-        li.innerText = `Cue "${cue.cueId}" at ${cue.startTime} s`;
-        cuesEl.appendChild(li);
-      });
+      cues.filter(cue => placement(cue) === 'PREROLL')
+        .forEach(cue => {
+          const li = document.createElement('li');
+          li.innerText = `Cue "${cue.id}" preroll`;
+          cuesEl.appendChild(li);
+        });
+      cues.filter(cue => placement(cue) === 'MIDROLL')
+        .forEach(cue => {
+          const li = document.createElement('li');
+          const cueDuration = cue.endTime - cue.startTime;
+          if (cueDuration > 1) {
+            li.innerText = `Cue "${cue.id}" at ${cue.startTime.toFixed(1)} - ${cue.endTime.toFixed(1)} s`;
+          } else {
+            li.innerText = `Cue "${cue.id}" at ${cue.startTime.toFixed(1)} s`;
+          }
+          cuesEl.appendChild(li);
+        });
+      cues.filter(cue => placement(cue) === 'POSTROLL')
+        .forEach(cue => {
+          const li = document.createElement('li');
+          li.innerText = `Cue "${cue.id}" postroll`;
+          cuesEl.appendChild(li);
+        });
     }
 
     btnLoad.addEventListener('click', load);
 
+    /**
+     * Remove cues from the list
+     */
+    function clearCues() {
+      Array.from(cuesEl.childNodes).forEach(el => cuesEl.removeChild(el));
+    }
+
     function clearUi () {
+      // Clear the seek bar
+      state.position = null;;
+      state.interstitial = null;
+      state.live = false;
+      state.duration = null;
+      repaint();
       // Remove cues from the seek bar
       Array.from(seekBar.childNodes)
         .filter(el => el.classList && el.classList.contains('cue'))
         .forEach(el => seekBar.removeChild(el));
-      // Remove cues from the list
-      Array.from(cuesEl.childNodes).forEach(el => cuesEl.removeChild(el));
+      clearCues();
     }
 
     btnUnload.addEventListener('click', async () => {
-      await player.unload();
+      dispose();
+      await player.release();
       clearUi();
       state.canLoad = true;
       state.canUnload = false;
@@ -439,6 +693,7 @@
     });
 
     btnDestroy.addEventListener('click', () => {
+      dispose();
       player.destroy();
       clearUi();
       state.canUnload = false;
